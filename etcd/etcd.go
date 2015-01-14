@@ -27,3 +27,11 @@ func NewEtcdClient(machines []string, ti *TLSInfo) (EtcdClient, error) {
 	}
 	return etcd.NewClient(machines), nil
 }
+
+func ErrIsNotFound(err error) bool {
+	if err, ok := err.(*etcd.EtcdError); ok {
+		return err.ErrorCode == ErrorKeyNotFound
+	}
+	return false
+
+}
