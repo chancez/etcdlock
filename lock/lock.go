@@ -17,17 +17,17 @@
 package lock
 
 type Lock struct {
-	id     string
-	key    string
+	holder string // holder is the holder of who is holding the lock
+	id     string // id should be a unique identifier for a lock
 	client LockClient
 }
 
-func New(id, key string, client LockClient) (lock *Lock) {
-	return &Lock{id: id, key: key, client: client}
+func New(holder, id string, client LockClient) (lock *Lock) {
+	return &Lock{holder: holder, id: id, client: client}
 }
 
 func (l *Lock) store(f func(*Semaphore) error) (err error) {
-	sem, err := l.client.Get(l.key)
+	sem, err := l.client.Get(l.id)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (l *Lock) store(f func(*Semaphore) error) (err error) {
 		return err
 	}
 
-	err = l.client.Set(l.key, sem)
+	err = l.client.Set(l.id, sem)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (l *Lock) store(f func(*Semaphore) error) (err error) {
 }
 
 func (l *Lock) Get() (sem *Semaphore, err error) {
-	sem, err = l.client.Get(l.key)
+	sem, err = l.client.Get(l.id)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +68,12 @@ func (l *Lock) SetMax(max int) (sem *Semaphore, oldMax int, err error) {
 
 func (l *Lock) Lock() (err error) {
 	return l.store(func(sem *Semaphore) error {
-		return sem.Lock(l.id)
+		return sem.Lock(l.holder)
 	})
 }
 
 func (l *Lock) Unlock() error {
 	return l.store(func(sem *Semaphore) error {
-		return sem.Unlock(l.id)
+		return sem.Unlock(l.holder)
 	})
 }
